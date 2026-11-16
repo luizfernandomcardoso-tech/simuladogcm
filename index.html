@@ -87,8 +87,8 @@
                 </div>
             </div>
             <div class="sync-buttons">
-                <button onclick="salvarParaDrive()" class="btn-sync btn-save">💾 Salvar Progresso</button>
-                <label class="btn-sync btn-load">📂 Carregar Progresso <input type="file" id="file-input" accept=".json" onchange="carregarDoDrive(event)" style="display:none;"></label>
+                <button onclick="copiarProgresso()" class="btn-sync btn-save">📋 Copiar Progresso</button>
+                <button onclick="carregarProgressoTexto()" class="btn-sync btn-load">📥 Colar e Carregar</button>
             </div>
             <div class="info-bar">
                 <span>Filtro: <strong id="txt-filtro">TODAS</strong></span>
@@ -5460,34 +5460,31 @@
             document.getElementById('stat-pendentes').innerText = questoes.length - respondidas;
         }
 
-        function salvarParaDrive() {
-            const dadosStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(progresso));
-            const downloadAnchor = document.createElement('a');
-            downloadAnchor.setAttribute("href", dadosStr);
-            downloadAnchor.setAttribute("download", "progresso_gcm_drive.json");
-            document.body.appendChild(downloadAnchor);
-            downloadAnchor.click();
-            downloadAnchor.remove();
-            alert('Arquivo baixado! Salve-o no seu Google Drive.');
+        function copiarProgresso() {
+            const dados = JSON.stringify(progresso);
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(dados).then(() => {
+                    alert('📋 Código de progresso copiado! Cole no WhatsApp (para você mesmo), Notas ou Google Keep para guardar.');
+                }).catch(() => {
+                    prompt("Copie o código abaixo para salvar:", dados);
+                });
+            } else {
+                prompt("Copie o código abaixo para salvar:", dados);
+            }
         }
 
-        function carregarDoDrive(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    progresso = JSON.parse(e.target.result);
-                    localStorage.setItem('gcm_progresso', JSON.stringify(progresso));
-                    indexFiltrado = 0;
-                    carregarQuestao();
-                    alert('Progresso carregado!');
-                } catch (err) {
-                    alert('Erro ao ler o arquivo.');
-                }
-            };
-            reader.readAsText(file);
+        function carregarProgressoTexto() {
+            const dados = prompt("Cole aqui o código de progresso que você salvou anteriormente:");
+            if (!dados) return;
+            try {
+                progresso = JSON.parse(dados);
+                localStorage.setItem('gcm_progresso', JSON.stringify(progresso));
+                indexFiltrado = 0;
+                carregarQuestao();
+                alert('✅ Progresso restaurado com sucesso!');
+            } catch (err) {
+                alert('❌ Código inválido ou corrompido.');
+            }
         }
 
         window.onload = () => {
